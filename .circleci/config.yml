@@ -1,4 +1,7 @@
 version: 2.1
+orbs: 
+  node: 'circleci/node:4.1'
+  slack: circleci/slack@4.10.1
 
 jobs: 
   build-frontend:
@@ -87,13 +90,25 @@ jobs:
             cd backend
             npm install
             # npm install oauth-sign@^0.9.0
-            npm audit fix --audit-level=critical --force              
-
+            npm audit fix --audit-level=critical --force  
+            exit 1            
+  deploy:
+    executor:
+      name: node/default #hello
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: npm run deploy
+      - slack/notify:
+          channel: general
+          event: fail
+          template: basic_fail_1
 
 workflows:
   default:
     jobs:
-      - build-frontend
+      - build-frontend #name
       - build-backend
       - test-frontend:
           requires: [build-frontend]
@@ -102,4 +117,6 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]   
       - scan-backend:
-          requires: [build-backend]        
+          requires: [build-backend] 
+      - deploy:
+          context: slack-secrets           
