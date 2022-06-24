@@ -1,6 +1,6 @@
 version: 2.1
 orbs: 
-  node: 'circleci/node:4.1'
+  #node: 'circleci/node:4.1'
   slack: circleci/slack@4.10.1
 
 jobs: 
@@ -94,7 +94,7 @@ jobs:
             exit 1            
   deploy:
     executor:
-      name: node/default #hello
+      name: node/default 
     steps:
       - checkout
       - node/install-packages
@@ -108,7 +108,7 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend #name
+      - build-frontend 
       - build-backend
       - test-frontend:
           requires: [build-frontend]
