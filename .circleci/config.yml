@@ -91,19 +91,11 @@ jobs:
             # npm install oauth-sign@^0.9.0
             npm audit fix --audit-level=critical --force  
             exit 1
-                        
-  deploy:
-    executor:
-      name: node/default 
-    steps:
-      # - checkout
-      # - node/install-packages
-      # - run:
-      #     command: npm run deploy
       - slack/notify:
           channel: general
           event: fail
-          template: basic_fail_1
+          template: basic_fail_1                  
+  
 
 workflows:
   default:
@@ -117,9 +109,6 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]   
       - scan-backend:
+          context: cicd project
           requires: [build-backend] 
-      - deploy:
-          context: cicd project  
-          requires: [scan-backend,build-frontend,scan-frontend]
-          # requires: [test-frontend]
-          # requires: [test-backend]
+      
