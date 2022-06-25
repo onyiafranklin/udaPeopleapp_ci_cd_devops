@@ -118,4 +118,4 @@ workflows:
       - scan-backend:
           requires: [build-backend] 
       - deploy:
-          context: slack-secrets           
+          context: cicd project          
