@@ -119,4 +119,10 @@ workflows:
       - scan-backend:
           requires: [build-backend] 
       - deploy:
-          context: cicd project          
+          context: cicd project  
+          requires: [build-frontend]
+          requires: [build-backend]
+          requires: [scan-frontend]
+          requires: [scan-backend]
+          requires: [test-frontend]
+          requires: [test-backend]
