@@ -2,6 +2,7 @@ version: 2.1
 commands:
   # Exercise - Rollback
   destroy-environment:
+    description: This will destroy front and backend cloudformation stacks.
     steps:
       - run:
           name: Destroy environment
@@ -109,7 +110,6 @@ jobs:
           channel: general
           event: fail
           template: basic_fail_1  
-
   deploy-infrastructure:
     docker: 
       - image: amazon/aws-cli
@@ -146,6 +146,28 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt 
       - destroy-environment
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:  
+      - checkout
+      - add_ssh_keys:
+                # You can get this ID in the section where you registered the SSH Key
+                fingerprints: ["dd:e1:36:ea:9b:ec:86:e3:59:f6:8f:d5:b7:14:2e:b5"] 
+      - attach_workspace:
+            at: ~/
+      - run:
+          name: install dependencies
+          command: |
+            apk add --update tar gzip ansible 
+            pip install awscli 
+      - run:
+          name: Run Playbook and Configure server
+          command: |
+    
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml    
+      
 workflows:
   default:
     jobs:
@@ -162,4 +184,7 @@ workflows:
           requires: [build-backend] 
       - deploy-infrastructure:
           requires: [build-frontend,build-backend,scan-frontend,scan-backend,test-frontend,test-backend]     
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+
       
