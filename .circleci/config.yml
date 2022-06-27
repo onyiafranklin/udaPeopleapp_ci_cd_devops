@@ -10,9 +10,20 @@ commands:
           # ${CIRCLE_WORKFLOW_ID:0:5} takes the first 5 chars of the variable CIRCLE_CI_WORKFLOW_ID 
           when: on_fail
           command: |
-            # aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} 
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} 
+  reverse-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: Reverse migrations
+          when: on_fail
+          command: |
+              cd ~/project/backend
+              npm install
+              npm run migration:revert
+            fi          
 
 orbs: 
   slack: circleci/slack@4.10.1
@@ -189,6 +200,75 @@ jobs:
                 curl  --insecure https://kvdb.io/EgQ6d2fTbBJTmJXuVH4cWg/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
       - destroy-environment      
+  deploy-frontend:
+    docker:
+      - python:3.7-alpine3.11
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update  tar gzip nodejs npm ansible curl aws-cli
+      - run:
+          name: Install aws cli
+          command: |
+            pip install awscli
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text)
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      # Here's where you will add some code to rollback on failure      
+      - destroy-environment              
+  deploy-backend:
+    docker:
+      - image: python:3.10-alpine3.16
+    steps:
+       - checkout
+       - add_ssh_keys:
+                # You can get this ID in the section where you registered the SSH Key
+                fingerprints: ["dd:e1:36:ea:9b:ec:86:e3:59:f6:8f:d5:b7:14:2e:b5"] 
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update  tar gzip nodejs npm ansible curl aws-cli
+      - run:
+          name: Install aws cli
+          command: |
+            pip install awscli
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment
+      - reverse-migrations
+      # Here's where you will add some code to rollback on failure  
               
 workflows:
   default:
@@ -205,10 +285,14 @@ workflows:
           context: cicd project
           requires: [build-backend] 
       - deploy-infrastructure:
-          requires: [build-frontend,build-backend,scan-frontend,scan-backend,test-frontend,test-backend]     
+          requires: [scan-frontend,scan-backend,test-frontend,test-backend]     
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
-          requires: [configure-infrastructure]    
+          requires: [configure-infrastructure]   
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]     
 
       
