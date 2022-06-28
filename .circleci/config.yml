@@ -13,17 +13,22 @@ commands:
             aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} 
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} 
-  reverse-migrations:
+  revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
-          name: Reverse migrations
+          name: Revert migrations
           when: on_fail
           command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            SUCCESS=$(curl --insecure https://kvdb.io/CcF2JQUWqUbLJC5yQ9UeMB/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            echo $SUCCESS
+            if(( $SUCCESS==1 )); 
+            then
               cd ~/project/backend
               npm install
               npm run migration:revert
-                    
+            fi
 
 orbs: 
   slack: circleci/slack@4.10.1
@@ -269,7 +274,7 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment
-      - reverse-migrations
+      - revert-migrations
       # Here's where you will add some code to rollback on failure  
               
 workflows:
