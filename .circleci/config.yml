@@ -317,12 +317,12 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-      # Change this to 0 after the job fails
-              return 1
+              return 1 # 
             else
               return 1
             fi
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on fail
+
       - destroy-environment
       - revert-migrations      
 workflows:
@@ -350,6 +350,6 @@ workflows:
       - deploy-backend:
           requires: [run-migrations,deploy-frontend]    
       - smoke-test:
-          require: [deploy-frontend,deploy-backend]     
+          requires: [deploy-frontend,deploy-backend]     
 
       
