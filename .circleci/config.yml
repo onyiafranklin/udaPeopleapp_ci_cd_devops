@@ -198,13 +198,14 @@ jobs:
             npm run migrations > migrations_dumps.txt
             cat migrations_dumps.txt
       - run:
-          name: Send migration results to memstash
+          name: Send migration results to kvdb
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               happy= $(curl  https://kvdb.io/CcF2JQUWqUbLJC5yQ9UeMB/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1')
               echo $happy
             fi
+            echo $happy
       - destroy-environment      
   deploy-frontend:
     docker:
@@ -286,11 +287,22 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update  tar gzip nodejs npm ansible curl aws-cli
+      - run:
+          name: Install aws cli
+          command: |
+            pip install awscli
       - run:
           name: Get backend url
           command: |
-            # your code here
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
       - run:
           name: Backend smoke test.
           command: |
