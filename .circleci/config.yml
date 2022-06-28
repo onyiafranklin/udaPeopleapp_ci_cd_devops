@@ -360,13 +360,12 @@ jobs:
           name: Update cloudfront distribution
           command: |
             # Change the initial stack name, as applicable to you
-aws cloudformation deploy \
-        --template-file .circleci/files/cloudfront.yml \
-        --stack-name InitialStack \
-        --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
-        --tags project=udapeople
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+             
 
 workflows:
   default:
