@@ -203,6 +203,7 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               curl  https://kvdb.io/CcF2JQUWqUbLJC5yQ9UeMB/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
+            fi  
       - destroy-environment      
   deploy-frontend:
     docker:
