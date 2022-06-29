@@ -346,10 +346,10 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Install dependencies
-        command: |
-          apk add --update curl
-          pip install awscli
+          name: Install dependencies
+          command: |
+            apk add --update curl
+            pip install awscli
       - run:
           name: Update cloudfront distribution
           command: |
