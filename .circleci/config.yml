@@ -302,8 +302,7 @@ jobs:
       - run:
           name: Install aws cli
           command: |
-            pip install awscli
-      
+            pip install awscli 
       - run:
           name: Get backend url
           command: |
@@ -320,7 +319,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            if curl -s "${API_URL}/api/status" | grep "ok"
+            if curl  "${API_URL}/api/status" | grep "ok"
             then
               return 0
             else
@@ -357,7 +356,12 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
-            # Change the initial stack name, as applicable to you
+            export OldWorkflowID=$(aws cloudformation list-exports \
+            --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+            echo $OldWorkflowID >> ~/OldWorkflowID.txt
+            cat ~/OldWorkflowID.txt
+
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
