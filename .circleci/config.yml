@@ -364,7 +364,7 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}  
   cleanup:
     docker:
-      - image:  python:3.7-alpine3.11
+      - image:  amazon/aws-cli
     steps:
       - checkout
       - run:
@@ -375,8 +375,8 @@ jobs:
                 --no-paginate --output text)
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"       
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            export STACKS= $(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
             echo Stack names: "${STACKS[@]}"
             export STACKS=[] #put the list of stacks here
       - run:
@@ -390,8 +390,7 @@ jobs:
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"  
             else
               echo "-----------------CANNOT CLEAN UP-----------------"  
-            fi                
-            
+            fi                       
 workflows:
   default:
     jobs:
