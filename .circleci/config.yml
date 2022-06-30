@@ -403,7 +403,10 @@ workflows:
           context: cicd project
           requires: [build-backend] 
       - deploy-infrastructure:
-          requires: [scan-frontend,scan-backend,test-frontend,test-backend]     
+          requires: [scan-frontend,scan-backend,test-frontend,test-backend] 
+          filters:
+            branches:
+              only: [master]    
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
