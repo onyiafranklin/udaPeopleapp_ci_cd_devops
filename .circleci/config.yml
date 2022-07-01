@@ -387,6 +387,32 @@ jobs:
             else
               echo "----------------No need to clean up-----------------"
             fi
+  add-prometheus-node-exporter:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["dd:e1:36:ea:9b:ec:86:e3:59:f6:8f:d5:b7:14:2e:b5"]
+      - run:
+          name: install dependencies
+          command: |
+            apk add --update tar gzip ansible nodejs npm
+            pip install awscli
+      - restore_cache:
+          keys: [backend-build]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}          
      
 workflows:
   default:
@@ -421,4 +447,6 @@ workflows:
           requires: [smoke-test]      
       - cleanup: 
           requires: [cloudfront-update]
+      - add-prometheus-node-exporter:
+          requires: [cloudfront-update,cleanup]    
       
