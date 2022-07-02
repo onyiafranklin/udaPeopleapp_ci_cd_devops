@@ -1,1 +1,2 @@
 [URL01] https://github.com/onyiafranklin/udaPeopleapp_ci_cd_devops
+[URL02] http://udapeople-ef798a6.s3-website-us-west-2.amazonaws.com
